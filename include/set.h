@@ -197,6 +197,13 @@ typename set<Key, Compare>::iterator &set<Key, Compare>::iterator::operator++() 
 
 template<class Key, class Compare>
 typename set<Key, Compare>::iterator &set<Key, Compare>::iterator::operator--() {
+    if(!ptr_->left){
+        while (ptr_->parent.lock() && ptr_->parent.lock()->left == ptr_){
+            ptr_ = ptr_->parent.lock();
+        }
+        ptr_->parent.lock();
+        return *this;
+    }
     ptr_ = ptr_->left;
     while (ptr_->right){
         ptr_= ptr_->right;
