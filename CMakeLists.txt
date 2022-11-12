@@ -6,4 +6,7 @@ add_library(${PROJECT_NAME} INTERFACE )
 
 target_include_directories(${PROJECT_NAME} INTERFACE include)
 
+add_executable(main examples/example_1.cpp)
+target_link_libraries(main set)
+
 add_subdirectory(tests)
