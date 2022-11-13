@@ -8,10 +8,12 @@
 
 template <class Key, class Compare = std::less<Key>>
 class set {
+    //TODO add using = ...
     std::shared_ptr<typename Tree<Key, Compare>::Node> root;
-    Tree<Key, Compare> tree_;
-    Compare cmp_;
+    std::shared_ptr<typename Tree<Key, Compare>::Node> end_node;
+    std::shared_ptr<typename Tree<Key, Compare>::Node> rend_node;
 
+    Tree<Key, Compare> tree_;
 public:
     struct iterator {
         iterator() = delete;
@@ -23,8 +25,10 @@ public:
         bool operator!=(const iterator& rhs);
 
     private:
-        iterator(std::shared_ptr<typename Tree<Key, Compare>::Node> ptr);
+        iterator(std::shared_ptr<typename Tree<Key, Compare>::Node> ptr,
+                 std::shared_ptr<typename Tree<Key, Compare>::Node> eptr);
         std::shared_ptr<typename Tree<Key, Compare>::Node> ptr_;
+        std::shared_ptr<typename Tree<Key, Compare>::Node> eptr_;
 
         friend class set<Key, Compare>;
     };
@@ -36,8 +40,13 @@ public:
     set(set&& other);
     ~set();
 
+    using reverse_iterator = std::reverse_iterator<iterator>;
+
     iterator begin() const;
     iterator end()   const;
+
+    reverse_iterator rbegin() const;
+    reverse_iterator rend() const;
 
     void insert(const Key& key);
     void erase(const Key& key);
@@ -61,41 +70,50 @@ public:
 
 template<class Key, class Compare>
 set<Key, Compare>::set():
-    root(nullptr),tree_(Tree<Key,Compare>()), cmp_(Compare())
+    root(nullptr), end_node(std::make_shared<Node>()), rend_node(std::make_shared<Node>()), tree_(Tree<Key,Compare>())
     {}
 
 
 template<class Key, class Compare>
 set<Key, Compare>::set(const set::iterator& lhs, const set::iterator& rhs):
-    root(nullptr), tree_(Tree<Key, Compare>()), cmp_(Compare())
+    root(nullptr), end_node(std::make_shared<Node>()), rend_node(std::make_shared<Node>()), tree_(Tree<Key, Compare>())
 {
     set::iterator cur = lhs;
     for(; cur != rhs; ++cur){
         insert(*cur);
         //TODO check end iterator
     }
+    end_node->parent = tree_.max_node();
+    rend_node->parent = tree_.min_node();
 }
 
 
 template<class Key, class Compare>
 set<Key, Compare>::set(std::initializer_list<Key> list):
-    root(nullptr), tree_(Tree<Key, Compare>()), cmp_(Compare())
+    root(nullptr), end_node(std::make_shared<Node>()), rend_node(std::make_shared<Node>()), tree_(Tree<Key, Compare>())
 {
     for(auto item: list){
         insert(item);
     }
+
+    end_node->parent = tree_.max_node();
+    rend_node->parent = tree_.min_node();
 }
 
 
 template<class Key, class Compare>
 set<Key, Compare>::set(const set &other):
-    root(other.root), tree_(other.tree_), cmp_(other.cmp_)
-{}
+    tree_(other.tree_)
+{
+    root = tree_.root();
+    end_node->parent = tree_.max_node();
+    rend_node->parent = tree_.min_node();
+}
 
 
 template<class Key, class Compare>
 set<Key, Compare>::set(set &&other):
-    root(std::move(other.root)), tree_(std::move(other.tree_)), cmp_(std::move(other.cmp_))
+    root(std::move(other.root)), tree_(std::move(other.tree_))
     {}
 
 
@@ -107,29 +125,37 @@ set<Key, Compare>::~set() {
 
 template<class Key, class Compare>
 typename set<Key, Compare>::iterator set<Key, Compare>::begin() const{
-    if(!root){
-        return iterator(root);
-    }
-    auto node = root;
-    while(node->left){
-        node = node->left;
-    }
-    return iterator(node);
+    return iterator(tree_.min_node(), end_node);
 }
 
 template<class Key, class Compare>
 typename set<Key, Compare>::iterator set<Key, Compare>::end() const{
-    return set::iterator{nullptr};
+    return iterator(end_node, end_node);
 }
+
+template<class Key, class Compare>
+typename set<Key, Compare>::reverse_iterator set<Key, Compare>::rbegin() const {
+    return set::reverse_iterator(tree_.max_node(), rend_node);
+}
+
+template<class Key, class Compare>
+typename set<Key, Compare>::reverse_iterator set<Key, Compare>::rend() const {
+    return set::reverse_iterator(rend_node, rend_node);
+}
+
 
 template<class Key, class Compare>
 void set<Key, Compare>::insert(const Key &key) {
     root = tree_.insert(key);
+    end_node->parent = tree_.max_node();
+    rend_node->parent = tree_.min_node();
 }
 
 template<class Key, class Compare>
 void set<Key, Compare>::erase(const Key &key) {
     root = tree_.erase(key);
+    end_node->parent = tree_.max_node();
+    rend_node->parent = tree_.min_node();
 }
 
 template<class Key, class Compare>
@@ -145,12 +171,19 @@ bool set<Key, Compare>::empty() const {
 template<class Key, class Compare>
 typename set<Key, Compare>::iterator set<Key, Compare>::find(const Key &key) {
     auto node = tree_.search(key);
-    return set::iterator(node);
+    if(!node){
+        return iterator(end_node, end_node);
+    }
+    return iterator(node, end_node);
 }
 
 template<class Key, class Compare>
 typename set<Key, Compare>::iterator set<Key, Compare>::lower_bound(const Key &key) {
-    return iterator(tree_.lower_bound(key));
+    auto node = tree_.lower_bound(key);
+    if(!node){
+        return iterator(end_node, end_node);
+    }
+    return iterator(node, end_node);
 }
 
 
@@ -175,8 +208,9 @@ bool set<Key, Compare>::iterator::operator!=(const set::iterator &rhs) {
 }
 
 template<class Key, class Compare>
-set<Key, Compare>::iterator::iterator(std::shared_ptr<typename Tree<Key, Compare>::Node> ptr):
-    ptr_(ptr)
+set<Key, Compare>::iterator::iterator(std::shared_ptr<typename Tree<Key, Compare>::Node> ptr,
+                                      std::shared_ptr<typename Tree<Key, Compare>::Node> eptr):
+    ptr_(ptr), eptr_(eptr)
     {}
 
 template<class Key, class Compare>
@@ -186,6 +220,9 @@ typename set<Key, Compare>::iterator &set<Key, Compare>::iterator::operator++() 
             ptr_ = ptr_->parent.lock();
         }
         ptr_ = ptr_->parent.lock();
+        if(!ptr_){
+            ptr_ = eptr_;
+        }
         return *this;
     }
     ptr_ = ptr_->right;
@@ -201,7 +238,10 @@ typename set<Key, Compare>::iterator &set<Key, Compare>::iterator::operator--() 
         while (ptr_->parent.lock() && ptr_->parent.lock()->left == ptr_){
             ptr_ = ptr_->parent.lock();
         }
-        ptr_->parent.lock();
+        ptr_ = ptr_->parent.lock();
+        if(!ptr_){
+            ptr_ = eptr_;
+        }
         return *this;
     }
     ptr_ = ptr_->left;

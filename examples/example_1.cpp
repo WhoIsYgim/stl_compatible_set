@@ -4,8 +4,7 @@
 
 int main(){
 
-    Tree<int> a;
-    a.insert(1);
+
     set<int> ab;
     for(int i = 0; i < 10; ++i){
         ab.insert(i);
@@ -14,6 +13,8 @@ int main(){
     for (auto item: ab){
         std::cout << item << std::endl;
     }
+
+    auto rit = ab.rend();
 
     std::cout << "----------------------------------\n";
 
@@ -25,15 +26,9 @@ int main(){
 //    }
 
 
-    std::cout << ab.size() << std::endl;
-    std::cout << "----------------------------------\n";
-    ab.erase(-1);
-
-    for (auto item: ab){
-        std::cout << item << std::endl;
-    }
-    std::cout << "----------------------------------\n";
-    std::cout << ab.size() << std::endl;
+//    for(int i = 0; i < 10; ++i){
+//        ab.erase(i);
+//    }
 
 
     return 0;

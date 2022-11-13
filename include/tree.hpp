@@ -11,7 +11,7 @@ public:
     Tree();
     Tree(const Tree& other);
     Tree(Tree&& other);
-
+    ~Tree(){}
     struct Node{
         Key key;
         std::weak_ptr<Node> parent;
@@ -22,6 +22,8 @@ public:
         explicit Node(const Key& key, std::weak_ptr<Node> parent = std::weak_ptr<Node>(), size_t h = 1):
         key(key), height(h), parent(parent)
         {}
+        explicit Node(std::weak_ptr<Node> parent = std::weak_ptr<Node>()):
+        parent(parent){}
     };
 
 
@@ -29,12 +31,17 @@ public:
     std::shared_ptr<Node> insert(const Key& key);
     std::shared_ptr<Node> erase(const Key& key);
     std::shared_ptr<Node> lower_bound(const Key& key);
+    std::shared_ptr<Node> min_node() const;
+    std::shared_ptr<Node> max_node() const;
+    std::shared_ptr<Node> root() const;
 
     size_t size() const;
     bool empty() const;
 
 private:
-    std::shared_ptr<Node> root;
+    std::shared_ptr<Node> root_;
+    std::shared_ptr<Node> min_node_;
+    std::shared_ptr<Node> max_node_;
     size_t size_;
     Compare cmp_;
 
@@ -42,6 +49,7 @@ private:
     std::shared_ptr<Node> erase(std::shared_ptr<Node>& node, const Key& key);
     std::shared_ptr<Node> erase_min(std::shared_ptr<Node>& node);
     std::shared_ptr<Node> find_min(std::shared_ptr<Node>& node);
+    std::shared_ptr<Node> find_max(std::shared_ptr<Node>& node);
     std::shared_ptr<Node> balance(std::shared_ptr<Node>& node);
     std::shared_ptr<Node> right_rotate(std::shared_ptr<Node>& node);
     std::shared_ptr<Node> left_rotate(std::shared_ptr<Node>& node);
@@ -59,22 +67,22 @@ private:
 
 template<typename Key, typename Compare>
 Tree<Key, Compare>::Tree()
-: root(nullptr), size_(0), cmp_(Compare())
+: root_(nullptr), size_(0), cmp_(Compare())
 {}
 
 template<typename Key, typename Compare>
 std::shared_ptr<typename Tree<Key, Compare>::Node>Tree<Key, Compare>::insert(const Key &key) {
-    root = insert(root, key);
-    return root;
+    root_ = insert(root_, key);
+    return root_;
 }
 
 template<typename Key, typename Compare>
 std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::search(const Key &key) const {
-    if(!root){
+    if(!root_){
         return nullptr;
     }
 
-    auto current = root;
+    auto current = root_;
     while (current){
         if(cmp_(key, current->key)){
             current = current->left;
@@ -89,13 +97,13 @@ std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::search(co
 
 template<typename Key, typename Compare>
 std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::erase(const Key &key) {
-    root = erase(root, key);
-    return root;
+    root_ = erase(root_, key);
+    return root_;
 }
 
 template<typename Key, typename Compare>
 std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::lower_bound(const Key &key) {
-    auto node = root;
+    auto node = root_;
     std::shared_ptr<typename Tree<Key, Compare>::Node> prev_lb = nullptr;
 
     while(node){
@@ -110,6 +118,21 @@ std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::lower_bou
         }
     }
     return prev_lb;
+}
+
+template<typename Key, typename Compare>
+std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::min_node() const {
+    return min_node_;
+}
+
+template<typename Key, typename Compare>
+std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::max_node() const {
+    return max_node_;
+}
+
+template<typename Key, typename Compare>
+std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::root() const {
+    return root_;
 }
 
 template<typename Key, typename Compare>
@@ -133,6 +156,12 @@ std::shared_ptr<typename Tree<Key,Compare>::Node> Tree<Key, Compare>::insert(std
     if(!node){
         node = std::make_shared<Node>(key);
         ++size_;
+        if(!min_node_ || cmp_(key, min_node_->key)){
+            min_node_ = node;
+        }
+        if(!max_node_ || cmp_(max_node_->key, key)){
+            max_node_ = node;
+        }
         return node;
     }
 
@@ -161,6 +190,17 @@ std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::erase(std
         --size_;
 
         if(!node->right){
+            if(node == min_node_){
+                min_node_ = node->parent.lock();
+            }
+            if(node == max_node_){
+                if(!node->left){
+                    max_node_ = node->parent.lock();
+                } else {
+                    max_node_ = find_max(node->left);
+                }
+            }
+
             auto left = node->left;
             node->parent.reset();
             node->right.reset();
@@ -168,6 +208,11 @@ std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::erase(std
             return left;
         }
         auto min = find_min(node->right);
+
+        if(node == min_node_){
+            min_node_ = min;
+        }
+
         min->right = erase_min(node->right);
         min->left = node->left;
         if(min->left){
@@ -198,6 +243,18 @@ std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::find_min(
     }
     return find_min(node->left);
 }
+
+template<typename Key, typename Compare>
+std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::find_max(std::shared_ptr<Node> &node) {
+    if(!node){
+        return nullptr;
+    }
+    if(!node->right){
+        return node;
+    }
+    return find_max(node->right);
+}
+
 
 template<typename Key, typename Compare>
 std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::balance(std::shared_ptr<Node> &node) {
