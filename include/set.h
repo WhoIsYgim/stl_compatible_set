@@ -16,17 +16,24 @@ class set {
     Tree<Key, Compare> tree_;
 public:
     struct iterator {
+    public:
+        using difference_type = const std::ptrdiff_t;
+        using value_type = const Key;
+        using pointer = const Key*;
+        using reference = const Key&;
+        using iterator_category = std::bidirectional_iterator_tag;
+        
         iterator() = delete;
 
         const Key& operator*();
+
         iterator& operator++();
         iterator& operator--();
         bool operator==(const iterator& rhs);
         bool operator!=(const iterator& rhs);
 
     private:
-        iterator(std::shared_ptr<typename Tree<Key, Compare>::Node> ptr,
-                 std::shared_ptr<typename Tree<Key, Compare>::Node> eptr);
+        iterator(std::shared_ptr<typename Tree<Key, Compare>::Node> ptr);
         std::shared_ptr<typename Tree<Key, Compare>::Node> ptr_;
         std::shared_ptr<typename Tree<Key, Compare>::Node> eptr_;
 
@@ -125,24 +132,32 @@ set<Key, Compare>::~set() {
 
 template<class Key, class Compare>
 typename set<Key, Compare>::iterator set<Key, Compare>::begin() const{
-    return iterator(tree_.min_node(), end_node);
+    auto it = iterator(tree_.min_node());
+    it.eptr_ = end_node;
+    return it;
+
 }
 
 template<class Key, class Compare>
 typename set<Key, Compare>::iterator set<Key, Compare>::end() const{
-    return iterator(end_node, end_node);
+    auto it = iterator(end_node);
+    it.eptr_ = end_node;
+    return it;
 }
 
 template<class Key, class Compare>
 typename set<Key, Compare>::reverse_iterator set<Key, Compare>::rbegin() const {
-    return set::reverse_iterator(tree_.max_node(), rend_node);
+    iterator it(tree_.max_node());
+    it.eptr_ = rend_node;
+    return reverse_iterator(it);
 }
 
 template<class Key, class Compare>
 typename set<Key, Compare>::reverse_iterator set<Key, Compare>::rend() const {
-    return set::reverse_iterator(rend_node, rend_node);
+    iterator it(rend_node);
+    it.eptr_ = rend_node;
+    return reverse_iterator(it);
 }
-
 
 template<class Key, class Compare>
 void set<Key, Compare>::insert(const Key &key) {
@@ -208,9 +223,8 @@ bool set<Key, Compare>::iterator::operator!=(const set::iterator &rhs) {
 }
 
 template<class Key, class Compare>
-set<Key, Compare>::iterator::iterator(std::shared_ptr<typename Tree<Key, Compare>::Node> ptr,
-                                      std::shared_ptr<typename Tree<Key, Compare>::Node> eptr):
-    ptr_(ptr), eptr_(eptr)
+set<Key, Compare>::iterator::iterator(std::shared_ptr<typename Tree<Key, Compare>::Node> ptr):
+    ptr_(ptr)
     {}
 
 template<class Key, class Compare>

@@ -14,8 +14,12 @@ int main(){
         std::cout << item << std::endl;
     }
 
-    auto rit = ab.rend();
+    std::cout << "----------------------------------\n";
 
+    auto rit = ab.rbegin();
+    for(; rit != ab.rend(); ++rit){
+        std::cout << *rit << std::endl;
+    }
     std::cout << "----------------------------------\n";
 
 //    auto lb = ab.lower_bound(7);
