@@ -10,6 +10,9 @@ int main(){
         ab.insert(i);
     }
 
+    auto it = ab.begin();
+
+
     for (auto item: ab){
         std::cout << item << std::endl;
     }
@@ -17,6 +20,7 @@ int main(){
     std::cout << "----------------------------------\n";
 
     auto rit = ab.rbegin();
+
     for(; rit != ab.rend(); ++rit){
         std::cout << *rit << std::endl;
     }
