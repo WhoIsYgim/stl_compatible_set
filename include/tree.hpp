@@ -3,15 +3,15 @@
 
 #include <memory>
 
-#define MAX_DISBALANCE (1)
+#define MAX_IMBALANCE (1)
 
 template <typename Key, typename Compare = std::less<Key>>
 class Tree{
 public:
     Tree();
     Tree(const Tree& other);
-    Tree(Tree&& other);
-    ~Tree(){}
+    Tree(Tree&& other) noexcept ;
+    ~Tree()= default;
     struct Node{
         Key key;
         std::weak_ptr<Node> parent;
@@ -69,6 +69,19 @@ template<typename Key, typename Compare>
 Tree<Key, Compare>::Tree()
 : root_(nullptr), size_(0), cmp_(Compare())
 {}
+
+template<typename Key, typename Compare>
+Tree<Key, Compare>::Tree(const Tree &other) {
+    //TODO implement deep copy
+}
+
+template<typename Key, typename Compare>
+Tree<Key, Compare>::Tree(Tree &&other) noexcept:
+        root_(std::move(other.root_)), min_node_(std::move(other.min_node_)),
+        max_node_(std::move(other.max_node_)), cmp_(std::move(other.cmp_))
+{
+    other.size_ = 0;
+}
 
 template<typename Key, typename Compare>
 std::shared_ptr<typename Tree<Key, Compare>::Node>Tree<Key, Compare>::insert(const Key &key) {
@@ -259,13 +272,13 @@ std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::find_max(
 template<typename Key, typename Compare>
 std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::balance(std::shared_ptr<Node> &node) {
     fix_height(node);
-    if(balance_factor(node) >  MAX_DISBALANCE){
+    if(balance_factor(node) > MAX_IMBALANCE){
         if(balance_factor(node->right) < 0){
             node->right = right_rotate(node->right);
         }
         return left_rotate(node);
     }
-    if(balance_factor(node) < -MAX_DISBALANCE){
+    if(balance_factor(node) < -MAX_IMBALANCE){
         if(balance_factor(node->left) > 0){
             node->left = left_rotate(node->left);
         }

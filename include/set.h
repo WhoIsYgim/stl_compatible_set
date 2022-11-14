@@ -12,7 +12,7 @@ class set {
     using Node = typename Tree<Key, Compare>::Node;
 
     Tree<Key, Compare> tree_;
-    std::shared_ptr<Node> end_node;
+    std::shared_ptr<Node> end_node_;
 public:
     struct iterator {
     public:
@@ -76,9 +76,9 @@ public:
 template<class Key, class Compare>
 set<Key, Compare>::set():
     tree_(Tree<Key,Compare>())
-    {
-        end_node = std::make_shared<Node>();
-    }
+{
+    end_node_ = std::make_shared<Node>();
+}
 
 
 template<class Key, class Compare>
@@ -87,10 +87,10 @@ set<Key, Compare>::set(const set::iterator& lhs, const set::iterator& rhs):
 {
     set::iterator cur = lhs;
     for(; cur != rhs; ++cur){
-        insert(*cur);
-        //TODO check end iterator
+        if(cur.ptr_ != cur.eptr_)
+            insert(*cur);
     }
-    end_node = std::make_shared<Node>(tree_.max_node());
+    end_node_ = std::make_shared<Node>(tree_.max_node());
 }
 
 
@@ -101,7 +101,7 @@ set<Key, Compare>::set(std::initializer_list<Key> list):
     for(auto item: list){
         insert(item);
     }
-    end_node = std::make_shared<Node>(tree_.max_node());
+    end_node_ = std::make_shared<Node>(tree_.max_node());
 }
 
 
@@ -109,26 +109,26 @@ template<class Key, class Compare>
 set<Key, Compare>::set(const set &other):
     tree_(other.tree_)
 {
-    end_node = std::make_shared<Node>(tree_.max_node());
+    end_node_ = std::make_shared<Node>(tree_.max_node());
 }
 
 template<class Key, class Compare>
 set<Key, Compare>::set(set &&other):
-    tree_(std::move(other.tree_)), end_node(std::move(other.end_node))
+    tree_(std::move(other.tree_)), end_node_(std::move(other.end_node_))
     {}
 
 template<class Key, class Compare>
 typename set<Key, Compare>::iterator set<Key, Compare>::begin() const{
     auto it = iterator(tree_.min_node());
-    it.eptr_ = end_node;
+    it.eptr_ = end_node_;
     return it;
 
 }
 
 template<class Key, class Compare>
 typename set<Key, Compare>::iterator set<Key, Compare>::end() const{
-    auto it = iterator(end_node);
-    it.eptr_ = end_node;
+    auto it = iterator(end_node_);
+    it.eptr_ = end_node_;
     return it;
 }
 
@@ -144,12 +144,12 @@ typename set<Key, Compare>::reverse_iterator set<Key, Compare>::rend() const {
 
 template<class Key, class Compare>
 void set<Key, Compare>::insert(const Key &key) {
-    end_node->parent = tree_.max_node();
+    end_node_->parent = tree_.max_node();
 }
 
 template<class Key, class Compare>
 void set<Key, Compare>::erase(const Key &key) {
-    end_node->parent = tree_.max_node();
+    end_node_->parent = tree_.max_node();
 }
 
 template<class Key, class Compare>
@@ -166,12 +166,12 @@ template<class Key, class Compare>
 typename set<Key, Compare>::iterator set<Key, Compare>::find(const Key &key) {
     auto node = tree_.search(key);
     if(!node){
-        iterator it(end_node);
-        it.eptr_=end_node;
+        iterator it(end_node_);
+        it.eptr_=end_node_;
         return it;
     }
     iterator it(node);
-    it.eptr_=end_node;
+    it.eptr_=end_node_;
     return it;
 }
 
@@ -179,12 +179,12 @@ template<class Key, class Compare>
 typename set<Key, Compare>::iterator set<Key, Compare>::lower_bound(const Key &key) {
     auto node = tree_.lower_bound(key);
     if(!node){
-        iterator it(end_node);
-        it.eptr_=end_node;
+        iterator it(end_node_);
+        it.eptr_=end_node_;
         return it;
     }
     iterator it(node);
-    it.eptr_=end_node;
+    it.eptr_=end_node_;
     return it;
 }
 
