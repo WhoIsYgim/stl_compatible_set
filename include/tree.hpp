@@ -2,6 +2,7 @@
 #define SET_TREE_HPP
 
 #include <memory>
+#include <stack>
 
 #define MAX_IMBALANCE (1)
 
@@ -12,6 +13,9 @@ public:
     Tree(const Tree& other);
     Tree(Tree&& other) noexcept ;
     ~Tree()= default;
+
+    Tree& operator=(const Tree& other);
+
     struct Node{
         Key key;
         std::weak_ptr<Node> parent;
@@ -19,18 +23,18 @@ public:
         std::shared_ptr<Node> right;
         size_t height;
 
-        explicit Node(const Key& key, std::weak_ptr<Node> parent = std::weak_ptr<Node>(), size_t h = 1):
-        key(key), height(h), parent(parent)
+        explicit Node(const Key& key_, std::weak_ptr<Node> parent_ = std::weak_ptr<Node>(), size_t h = 1)
+        : key(key_), parent(parent_), height(h)
         {}
-        explicit Node(std::weak_ptr<Node> parent = std::weak_ptr<Node>()):
-        parent(parent){}
+        explicit Node(std::weak_ptr<Node> parent_ = std::weak_ptr<Node>()):
+        parent(parent_){}
     };
 
 
     std::shared_ptr<Node> search(const Key& key) const;
     std::shared_ptr<Node> insert(const Key& key);
     std::shared_ptr<Node> erase(const Key& key);
-    std::shared_ptr<Node> lower_bound(const Key& key);
+    std::shared_ptr<Node> lower_bound(const Key& key) const;
     std::shared_ptr<Node> min_node() const;
     std::shared_ptr<Node> max_node() const;
     std::shared_ptr<Node> root() const;
@@ -57,6 +61,10 @@ private:
     int8_t balance_factor(std::shared_ptr<Node>& node);
     size_t height(std::shared_ptr<Node>& node);
     void fix_height(std::shared_ptr<Node>& node);
+
+    std::shared_ptr<Node> copy_tree(std::shared_ptr<Node> other, std::shared_ptr<Node> parent = nullptr);
+
+    friend class TestTree;
 };
 
 
@@ -71,17 +79,30 @@ Tree<Key, Compare>::Tree()
 {}
 
 template<typename Key, typename Compare>
-Tree<Key, Compare>::Tree(const Tree &other) {
-    //TODO implement deep copy
+Tree<Key, Compare>::Tree(const Tree &other):size_(other.size_), cmp_(other.cmp_) {
+    root_ = copy_tree(other.root_);
+    min_node_ = find_min(root_);
+    max_node_ = find_max(root_);
 }
 
 template<typename Key, typename Compare>
 Tree<Key, Compare>::Tree(Tree &&other) noexcept:
         root_(std::move(other.root_)), min_node_(std::move(other.min_node_)),
-        max_node_(std::move(other.max_node_)), cmp_(std::move(other.cmp_))
+        max_node_(std::move(other.max_node_)), size_(other.size_), cmp_(std::move(other.cmp_))
 {
     other.size_ = 0;
 }
+
+template<typename Key, typename Compare>
+Tree<Key, Compare>&Tree<Key, Compare>::operator=(const Tree &other) {
+    root_ = copy_tree(other.root_);
+    size_ = other.size_;
+    cmp_ = other.cmp_;
+    min_node_ = find_min(root_);
+    max_node_ = find_max(root_);
+    return *this;
+}
+
 
 template<typename Key, typename Compare>
 std::shared_ptr<typename Tree<Key, Compare>::Node>Tree<Key, Compare>::insert(const Key &key) {
@@ -115,7 +136,7 @@ std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::erase(con
 }
 
 template<typename Key, typename Compare>
-std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::lower_bound(const Key &key) {
+std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::lower_bound(const Key &key) const {
     auto node = root_;
     std::shared_ptr<typename Tree<Key, Compare>::Node> prev_lb = nullptr;
 
@@ -349,6 +370,17 @@ std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::left_rota
     fix_height(node);
     fix_height(temp);
     return temp;
+}
+
+template<typename Key, typename Compare>
+std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::copy_tree( std::shared_ptr<Node> other, std::shared_ptr<Node> parent) {
+    if(!other){
+        return other;
+    }
+    auto node = std::make_shared<Node>(other->key, parent, other->height);
+    node->left = copy_tree(other->left, node);
+    node->right = copy_tree(other->right, node);
+    return node;
 }
 
 #endif //SET_TREE_HPP

@@ -10,8 +10,11 @@ int main(){
         ab.insert(i);
     }
 
+
+    set<int> bc(ab);
     auto it = ab.begin();
 
+    set<int> ac(ab.begin(), ab.end());
 
     for (auto item: ab){
         std::cout << item << std::endl;
@@ -19,9 +22,9 @@ int main(){
 
     std::cout << "----------------------------------\n";
 
-    auto rit = ab.rbegin();
+    auto rit = bc.rbegin();
 
-    for(; rit != ab.rend(); ++rit){
+    for(; rit != bc.rend(); ++rit){
         std::cout << *rit << std::endl;
     }
     std::cout << "----------------------------------\n";

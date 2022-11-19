@@ -22,19 +22,23 @@ public:
         using reference = const Key&;
         using iterator_category = std::bidirectional_iterator_tag;
         
-        iterator() = delete;
+        iterator() = default;
+        iterator(const iterator& other);
+        iterator& operator=(const iterator& other);
 
         reference operator*();
         pointer   operator->();
 
         iterator& operator++();
         iterator& operator--();
+        const iterator operator++(int);
+        const iterator operator--(int);
 
         bool operator==(const iterator& rhs);
         bool operator!=(const iterator& rhs);
 
     private:
-        iterator(std::shared_ptr<Node> ptr);
+        explicit iterator(std::shared_ptr<Node> ptr);
         std::shared_ptr<Node> ptr_;
         std::shared_ptr<Node> eptr_;
 
@@ -44,12 +48,17 @@ public:
     using reverse_iterator = std::reverse_iterator<iterator>;
 
     set();
-    set(const iterator& lhs, const iterator& rhs);
+    //set(const iterator& lhs, const iterator& rhs);
+
+    template< class InputIt >
+    set(InputIt first, InputIt last);
+
     set(std::initializer_list<Key>);
     set(const set& other);
     set(set&& other);
     ~set() = default;
 
+    set& operator=(const set& other);
 
     iterator begin() const;
     iterator end()   const;
@@ -62,10 +71,8 @@ public:
     size_t size() const;
     bool empty() const;
 
-    iterator find(const Key& key);
-    iterator lower_bound(const Key& key);
-
-    set& operator=(const set& other);
+    iterator find(const Key& key) const;
+    iterator lower_bound(const Key& key) const;
 };
 
 //  ----------------------------------------
@@ -81,27 +88,28 @@ set<Key, Compare>::set():
 }
 
 
-template<class Key, class Compare>
-set<Key, Compare>::set(const set::iterator& lhs, const set::iterator& rhs):
-    tree_(Tree<Key,Compare>())
-{
-    set::iterator cur = lhs;
-    for(; cur != rhs; ++cur){
-        if(cur.ptr_ != cur.eptr_)
-            insert(*cur);
-    }
-    end_node_ = std::make_shared<Node>(tree_.max_node());
-}
+//template<class Key, class Compare>
+//set<Key, Compare>::set(const set::iterator& lhs, const set::iterator& rhs):
+//    tree_(Tree<Key,Compare>())
+//{
+//    set::iterator cur = lhs;
+//    for(; cur != rhs; ++cur){
+//        if(cur.ptr_ != cur.eptr_)
+//            insert(*cur);
+//    }
+//    end_node_ = std::make_shared<Node>(tree_.max_node());
+//}
 
 
 template<class Key, class Compare>
 set<Key, Compare>::set(std::initializer_list<Key> list):
     tree_(Tree<Key,Compare>())
 {
+    end_node_ = std::make_shared<Node>();
     for(auto item: list){
         insert(item);
     }
-    end_node_ = std::make_shared<Node>(tree_.max_node());
+    end_node_->parent = tree_.max_node();
 }
 
 
@@ -117,8 +125,32 @@ set<Key, Compare>::set(set &&other):
     tree_(std::move(other.tree_)), end_node_(std::move(other.end_node_))
     {}
 
+
+template<class Key, class Compare>
+template<class InputIt>
+set<Key, Compare>::set(InputIt first, InputIt last):
+    tree_(Tree<Key, Compare>())
+{
+    end_node_ = std::make_shared<Node>();
+    while (first != last){
+        insert(*first);
+        ++first;
+    }
+}
+
+template<class Key, class Compare>
+set<Key, Compare>&set<Key, Compare>::operator=(const set &other) {
+    tree_ = other.tree_;
+
+    end_node_->parent = tree_.max_node();
+    return *this;
+}
+
 template<class Key, class Compare>
 typename set<Key, Compare>::iterator set<Key, Compare>::begin() const{
+    if(!tree_.min_node()){
+        return end();
+    }
     auto it = iterator(tree_.min_node());
     it.eptr_ = end_node_;
     return it;
@@ -144,11 +176,13 @@ typename set<Key, Compare>::reverse_iterator set<Key, Compare>::rend() const {
 
 template<class Key, class Compare>
 void set<Key, Compare>::insert(const Key &key) {
+    tree_.insert(key);
     end_node_->parent = tree_.max_node();
 }
 
 template<class Key, class Compare>
 void set<Key, Compare>::erase(const Key &key) {
+    tree_.erase(key);
     end_node_->parent = tree_.max_node();
 }
 
@@ -163,7 +197,7 @@ bool set<Key, Compare>::empty() const {
 }
 
 template<class Key, class Compare>
-typename set<Key, Compare>::iterator set<Key, Compare>::find(const Key &key) {
+typename set<Key, Compare>::iterator set<Key, Compare>::find(const Key &key) const {
     auto node = tree_.search(key);
     if(!node){
         iterator it(end_node_);
@@ -176,7 +210,7 @@ typename set<Key, Compare>::iterator set<Key, Compare>::find(const Key &key) {
 }
 
 template<class Key, class Compare>
-typename set<Key, Compare>::iterator set<Key, Compare>::lower_bound(const Key &key) {
+typename set<Key, Compare>::iterator set<Key, Compare>::lower_bound(const Key &key) const {
     auto node = tree_.lower_bound(key);
     if(!node){
         iterator it(end_node_);
@@ -192,6 +226,18 @@ typename set<Key, Compare>::iterator set<Key, Compare>::lower_bound(const Key &k
 //  --------------------------------------------
 //  |       ITERATOR METHODS DEFINITION        |
 //  --------------------------------------------
+
+template<class Key, class Compare>
+set<Key, Compare>::iterator::iterator(const set::iterator &other):
+ptr_(other.ptr_), eptr_(other.eptr_)
+{}
+
+template<class Key, class Compare>
+typename set<Key, Compare>::iterator &set<Key, Compare>::iterator::operator=(const iterator& other){
+    ptr_ = other.ptr_;
+    eptr_ = other.eptr_;
+    return *this;
+}
 
 
 template<class Key, class Compare>
@@ -211,6 +257,7 @@ bool set<Key, Compare>::iterator::operator==(const iterator &rhs) {
 
 template<class Key, class Compare>
 bool set<Key, Compare>::iterator::operator!=(const iterator &rhs) {
+
     return ptr_ != rhs.ptr_;
 }
 
@@ -218,6 +265,8 @@ template<class Key, class Compare>
 set<Key, Compare>::iterator::iterator(std::shared_ptr<Node> ptr):
     ptr_(ptr)
     {}
+
+
 
 template<class Key, class Compare>
 typename set<Key, Compare>::iterator &set<Key, Compare>::iterator::operator++() {
@@ -255,6 +304,20 @@ typename set<Key, Compare>::iterator &set<Key, Compare>::iterator::operator--() 
         ptr_= ptr_->right;
     }
     return *this;
+}
+
+template<class Key, class Compare>
+const typename set<Key, Compare>::iterator set<Key, Compare>::iterator::operator++(int){
+    auto tmp = *this;
+    ++*this;
+    return tmp;
+}
+
+template<class Key, class Compare>
+const typename set<Key, Compare>::iterator set<Key, Compare>::iterator::operator--(int){
+    auto tmp = *this;
+    --*this;
+    return tmp;
 }
 
 #endif //STL_COMPATIBLE_SET_SET_H
