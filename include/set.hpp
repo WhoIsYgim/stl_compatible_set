@@ -1,5 +1,5 @@
-#ifndef STL_COMPATIBLE_SET_SET_H
-#define STL_COMPATIBLE_SET_SET_H
+#ifndef STL_COMPATIBLE_SET_SET_HPP
+#define STL_COMPATIBLE_SET_SET_HPP
 
 #include <functional>
 #include <iterator>
@@ -48,11 +48,8 @@ public:
     using reverse_iterator = std::reverse_iterator<iterator>;
 
     set();
-    //set(const iterator& lhs, const iterator& rhs);
-
     template< class InputIt >
     set(InputIt first, InputIt last);
-
     set(std::initializer_list<Key>);
     set(const set& other);
     set(set&& other);
@@ -320,4 +317,4 @@ const typename set<Key, Compare>::iterator set<Key, Compare>::iterator::operator
     return tmp;
 }
 
-#endif //STL_COMPATIBLE_SET_SET_H
+#endif //STL_COMPATIBLE_SET_SET_HPP

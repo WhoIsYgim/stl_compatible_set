@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.23.2)
 project(set LANGUAGES CXX)
 
 
-option(BUILD_EXAMPLE_1 "Build executable example #1." ON)
+option(BUILD_EXAMPLE_1 "Build executable example #1." OFF)
 option(BUILD_BASE_TESTS "Build base tests for set." ON)
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wpedantic -Werror -Wall -Wextra")

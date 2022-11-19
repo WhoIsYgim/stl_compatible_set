@@ -11,11 +11,51 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: echo "building nothing..."
+      - name: install dependencies
+        run: sudo apt-get install libgtest-dev lcov
+      - name: build project
+        run: cd scripts/ && bash build.sh
+
+      - run: ls -la
+
+      - name: upload build
+        uses: actions/upload-artifact@v3
+        with:
+          name: build
+          path: .
 
 
   test:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - run: echo "tests required"
+      - name: download build
+        uses: actions/download-artifact@v3
+        with:
+          name: build
+
+      - run: ls -la
+
+      - name: install lcov
+        run: sudo apt update && sudo apt install lcov
+
+      - name: run basic tests
+        run : chmod +x ./build/base_test && ./build/base_test
+
+      - name: run tests
+        run: chmod +x ./build/test/set_tests && ./build/test/set_tests
+
+      - name: generate coverage info
+        run: lcov -t "build/test/set_tests" -o coverage.info -c -d  build/CMakeFiles/stl_compatible_set.dir/include
+
+      - name: filter coverage
+        run: lcov --remove coverage.info '/usr/*' -o coverage_filtered.info
+
+      - name: generate report
+        run: genhtml -o report coverage_filtered.info
+
+      - name: upload report
+        uses: actions/upload-artifact@v3
+        with:
+          name: report
+          path: ./report

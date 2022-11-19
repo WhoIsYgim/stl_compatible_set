@@ -2,7 +2,6 @@
 #define SET_TREE_HPP
 
 #include <memory>
-#include <stack>
 
 #define MAX_IMBALANCE (1)
 
@@ -289,6 +288,10 @@ std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::find_max(
     return find_max(node->right);
 }
 
+template<typename Key, typename Compare>
+size_t Tree<Key, Compare>::height(std::shared_ptr<Node> &node) {
+    return node == nullptr ? 0 : node->height;
+}
 
 template<typename Key, typename Compare>
 std::shared_ptr<typename Tree<Key, Compare>::Node> Tree<Key, Compare>::balance(std::shared_ptr<Node> &node) {
@@ -313,10 +316,6 @@ int8_t Tree<Key, Compare>::balance_factor(std::shared_ptr<Node> &node) {
     return height(node->right) - height(node->left);
 }
 
-template<typename Key, typename Compare>
-size_t Tree<Key, Compare>::height(std::shared_ptr<Node> &node) {
-    return node == nullptr ? 0 : node->height;
-}
 
 template<typename Key, typename Compare>
 void Tree<Key, Compare>::fix_height(std::shared_ptr<Node> &node) {
