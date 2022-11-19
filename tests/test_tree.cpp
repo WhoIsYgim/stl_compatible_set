@@ -14,7 +14,7 @@ protected:
 
 TEST_F(TestTree, default_constr){
     Tree<int> a;
-
+    a.insert(10);
 }
 
 

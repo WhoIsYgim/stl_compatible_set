@@ -46,10 +46,10 @@ jobs:
         run: chmod +x ./build/tests/set_tests && ./build/tests/set_tests
 
       - name: generate coverage info
-        run: lcov -t "build/test/set_tests" -o coverage.info -c -d  build/CMakeFiles/tests/set_tests.dir
+        run: lcov -t "build/test/set_tests" -o coverage.info -c -d  /build
 
       - name: filter coverage
-        run: lcov --remove coverage.info '/usr/*' -o coverage_filtered.info
+        run: lcov --remove coverage.info '/usr/*' -o coverage_filtered.info && lcov --remove coverage.info '*/examples/*' -o coverage_filtered.info && lcov --remove coverage.info '*/tests/*' -o coverage_filtered.info
 
       - name: generate report
         run: genhtml -o report coverage_filtered.info
