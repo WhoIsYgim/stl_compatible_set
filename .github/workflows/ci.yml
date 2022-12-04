@@ -34,19 +34,25 @@ jobs:
         with:
           name: build
 
-      - run: ls -la
+      - run : ls -la
 
       - name: install lcov
-        run: sudo apt update && sudo apt install lcov
+        run : sudo apt update && sudo apt install lcov
 
       - name: run basic tests
         run : chmod +x ./build/base_test && ./build/base_test
 
       - name: run tests
-        run: chmod +x ./build/tests/set_tests && ./build/tests/set_tests
+        run : chmod +x ./build/tests/set_tests && ./build/tests/set_tests
 
       - name: generate coverage info
-        run: lcov -t "build/test/set_tests" -o coverage.info -c -d  .
+        run : lcov -t "set_test" -o coverage.info -c -d "build/tests/CMakeFiles/set_tests.dir/" --exclude "*/usr/*" --exclude "*/tests/*"
 
-      - name: filter coverage
-        run: lcov --remove coverage.info '/usr/*' -o coverage_filtered.info && lcov --remove coverage.info '*/examples/*' -o coverage_filtered.info && lcov --remove coverage.info '*/tests/*' -o coverage.info
+      - name: genhtml
+        run : genhtml -o report coverage.info
+
+      - name: upload_report
+        uses: actions/upload-artifact@v3
+        with:
+            name: report
+            path: ./report
