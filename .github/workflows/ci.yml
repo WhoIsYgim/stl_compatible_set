@@ -40,7 +40,7 @@ jobs:
         run : sudo apt update && sudo apt install lcov
 
       - name: run basic tests
-        run : chmod +x ./build/base_test && ./build/base_test
+        run : chmod +x ./build/tests/base_test && ./build/tests/base_test
 
       - name: run tests
         run : chmod +x ./build/tests/set_tests && ./build/tests/set_tests
