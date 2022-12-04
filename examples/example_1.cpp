@@ -29,18 +29,5 @@ int main(){
     }
     std::cout << "----------------------------------\n";
 
-//    auto lb = ab.lower_bound(7);
-//    if(lb == ab.end()){
-//        std::cout << "end\n";
-//    } else {
-//        std::cout << *lb << std::endl;
-//    }
-
-
-//    for(int i = 0; i < 10; ++i){
-//        ab.erase(i);
-//    }
-
-
     return 0;
 }

@@ -31,8 +31,8 @@ public:
 
         iterator& operator++();
         iterator& operator--();
-        const iterator operator++(int);
-        const iterator operator--(int);
+        iterator operator++(int);
+        iterator operator--(int);
 
         bool operator==(const iterator& rhs);
         bool operator!=(const iterator& rhs);
@@ -83,19 +83,6 @@ set<Key, Compare>::set():
 {
     end_node_ = std::make_shared<Node>();
 }
-
-
-//template<class Key, class Compare>
-//set<Key, Compare>::set(const set::iterator& lhs, const set::iterator& rhs):
-//    tree_(Tree<Key,Compare>())
-//{
-//    set::iterator cur = lhs;
-//    for(; cur != rhs; ++cur){
-//        if(cur.ptr_ != cur.eptr_)
-//            insert(*cur);
-//    }
-//    end_node_ = std::make_shared<Node>(tree_.max_node());
-//}
 
 
 template<class Key, class Compare>
@@ -304,14 +291,14 @@ typename set<Key, Compare>::iterator &set<Key, Compare>::iterator::operator--() 
 }
 
 template<class Key, class Compare>
-const typename set<Key, Compare>::iterator set<Key, Compare>::iterator::operator++(int){
+ typename set<Key, Compare>::iterator set<Key, Compare>::iterator::operator++(int){
     auto tmp = *this;
     ++*this;
     return tmp;
 }
 
 template<class Key, class Compare>
-const typename set<Key, Compare>::iterator set<Key, Compare>::iterator::operator--(int){
+ typename set<Key, Compare>::iterator set<Key, Compare>::iterator::operator--(int){
     auto tmp = *this;
     --*this;
     return tmp;

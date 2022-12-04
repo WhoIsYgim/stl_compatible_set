@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.23.2)
 project(set LANGUAGES CXX)
 
 
-option(BUILD_EXAMPLE_1 "Build executable example #1." OFF)
-option(BUILD_BASE_TESTS "Build base tests for set." ON)
+option(BUILD_EXAMPLE_1 "Build executable example #1." ON)
+
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wpedantic -Wall -Wextra")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-command-line-argument")
@@ -21,11 +21,6 @@ if (BUILD_EXAMPLE_1)
     add_executable(example_1 examples/example_1.cpp)
     target_link_libraries(example_1 ${PROJECT_NAME})
 endif ()
-
-if(BUILD_BASE_TESTS)
-    add_executable(base_test examples/base_test_set.cpp)
-    target_link_libraries(base_test ${PROJECT_NAME})
-endif()
 
 enable_testing()
 add_subdirectory(tests)

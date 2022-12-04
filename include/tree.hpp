@@ -63,7 +63,6 @@ private:
 
     std::shared_ptr<Node> copy_tree(std::shared_ptr<Node> other, std::shared_ptr<Node> parent = nullptr);
 
-    friend class TestTree;
 };
 
 
