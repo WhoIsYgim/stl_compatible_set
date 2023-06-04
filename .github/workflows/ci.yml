@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: install dependencies
+        run: sudo apt-get install libgtest-dev lcov
+      - name: build project
+        run: cd scripts/ && bash build.sh
+
+      - run: ls -la
+
+      - name: upload build
+        uses: actions/upload-artifact@v3
+        with:
+          name: build
+          path: .
+
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: download build
+        uses: actions/download-artifact@v3
+        with:
+          name: build
+
+      - run : ls -la
+
+      - name: install lcov
+        run : sudo apt update && sudo apt install lcov
+
+      - name: run basic tests
+        run : chmod +x ./build/tests/base_test && ./build/tests/base_test
+
+      - name: run tests
+        run : chmod +x ./build/tests/set_tests && ./build/tests/set_tests
+
+      - name: generate coverage info
+        run : lcov -t "set_test" -o coverage.info -c -d "build/tests/CMakeFiles/set_tests.dir/" --exclude "*/usr/*" --exclude "*/tests/*"
+
+      - name: genhtml
+        run : genhtml -o report coverage.info
+
+      - name: upload_report
+        uses: actions/upload-artifact@v3
+        with:
+            name: report
+            path: ./report
